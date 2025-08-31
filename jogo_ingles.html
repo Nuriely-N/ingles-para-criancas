@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprenda Inglês!</title>
+    <!-- Tailwind CSS para um design responsivo e lúdico -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #d4e8ff 100%);
+        }
+        .card {
+            width: 80px;
+            height: 100px;
+            perspective: 1000px;
+            cursor: pointer;
+        }
+        .card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .card-inner.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .card-front {
+            background-color: #3b82f6;
+            color: white;
+            border: 3px solid #1e40af;
+        }
+        .card-back {
+            background-color: #f7f7f7;
+            color: #4a4a4a;
+            transform: rotateY(180deg);
+            border: 3px solid #e5e7eb;
+            font-size: 1.5rem;
+        }
+        .card-inner.matched .card-front,
+        .card-inner.matched .card-back {
+            animation: bounce-in 0.5s ease-out forwards;
+        }
+        @keyframes bounce-in {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .grid-container {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+        }
+        .grid-4x4 { grid-template-columns: repeat(4, 1fr); }
+        .grid-4x5 { grid-template-columns: repeat(4, 1fr); }
+        .grid-5x6 { grid-template-columns: repeat(5, 1fr); }
+        .answer-button {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .answer-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .correct {
+            background-color: #10b981;
+            color: white;
+        }
+        .incorrect {
+            background-color: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="p-4 flex flex-col items-center">
+
+    <div class="flex flex-col items-center p-6 bg-white rounded-2xl shadow-xl w-full max-w-2xl text-center">
+        <h1 class="text-5xl font-extrabold text-blue-600 mb-2">Aprenda Inglês!</h1>
+        <p class="text-2xl font-semibold text-gray-700 mb-8">Jogo de Correspondência e Quiz</p>
+
+        <!-- Navegação de Jogo -->
+        <div class="flex space-x-4 mb-8">
+            <button id="mode-match" class="bg-blue-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-colors">Jogo de Memória</button>
+            <button id="mode-quiz" class="bg-purple-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-purple-600 transition-colors">Quiz</button>
+        </div>
+
+        <!-- Seção de Pontuação e Controles de Dificuldade -->
+        <div class="w-full flex justify-between items-center mb-6">
+            <div class="text-xl font-bold text-gray-800">Pontos: <span id="score">0</span></div>
+            <div class="flex space-x-2">
+                <button id="difficulty-easy" class="bg-gray-200 text-gray-800 text-sm font-bold py-2 px-4 rounded-full hover:bg-gray-300">Fácil</button>
+                <button id="difficulty-medium" class="bg-gray-200 text-gray-800 text-sm font-bold py-2 px-4 rounded-full hover:bg-gray-300">Médio</button>
+                <button id="difficulty-hard" class="bg-gray-200 text-gray-800 text-sm font-bold py-2 px-4 rounded-full hover:bg-gray-300">Difícil</button>
+            </div>
+        </div>
+
+        <!-- Container para o jogo atual -->
+        <div id="game-container" class="w-full">
+            <!-- Conteúdo do jogo será carregado aqui -->
+        </div>
+
+        <!-- Mensagem de status e botão de reiniciar -->
+        <div id="game-controls" class="mt-8 text-center">
+            <p id="message" class="text-lg font-bold text-gray-800 mb-4"></p>
+            <button id="restart-button" class="hidden bg-green-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-400">
+                Jogar de Novo
+            </button>
+        </div>
+
+        <!-- Espaço para anúncios -->
+        <div id="ad-banner" class="w-full mt-10 p-4 border-2 border-dashed border-gray-300 rounded-lg text-center text-gray-500 text-sm">
+            <!-- Insira seu código Google AdSense ou de outro anunciante aqui -->
+            Espaço para Anúncio
+        </div>
+
+    </div>
+
+    <script>
+        // Configuração inicial e dados do jogo
+        let currentMode = 'match';
+        let currentDifficulty = 'easy';
+        let score = 0;
+
+        const cardsData = [
+            { word: 'CAT', emoji: '🐱' },
+            { word: 'DOG', emoji: '🐶' },
+            { word: 'SUN', emoji: '☀️' },
+            { word: 'TREE', emoji: '🌳' },
+            { word: 'CAR', emoji: '🚗' },
+            { word: 'BALL', emoji: '⚽' },
+            { word: 'SPOON', emoji: '🥄' },
+            { word: 'HEART', emoji: '❤️' },
+            { word: 'BOOK', emoji: '📖' },
+            { word: 'APPLE', emoji: '🍎' },
+            { word: 'STAR', emoji: '⭐' },
+            { word: 'LION', emoji: '🦁' },
+            { word: 'PENCIL', emoji: '✏️' },
+            { word: 'TABLE', emoji: '🪑' },
+            { word: 'KEY', emoji: '🔑' },
+            { word: 'CLOCK', emoji: '⏰' }
+        ];
+
+        // Seletor de elementos
+        const modeMatchButton = document.getElementById('mode-match');
+        const modeQuizButton = document.getElementById('mode-quiz');
+        const difficultyEasyButton = document.getElementById('difficulty-easy');
+        const difficultyMediumButton = document.getElementById('difficulty-medium');
+        const difficultyHardButton = document.getElementById('difficulty-hard');
+        const gameContainer = document.getElementById('game-container');
+        const scoreElement = document.getElementById('score');
+        const messageElement = document.getElementById('message');
+        const restartButton = document.getElementById('restart-button');
+
+        // Gerador de sons simples (sem precisar de arquivos externos!)
+        function playSound(type) {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            switch (type) {
+                case 'correct':
+                    oscillator.frequency.value = 523.25; // C5
+                    gainNode.gain.setValueAtTime(1, context.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+                    break;
+                case 'error':
+                    oscillator.frequency.value = 220; // A3
+                    gainNode.gain.setValueAtTime(0.5, context.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+                    break;
+                case 'win':
+                    oscillator.frequency.value = 659.25; // E5
+                    gainNode.gain.setValueAtTime(1, context.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 1);
+                    break;
+            }
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 1);
+        }
+
+        // Funções do Jogo de Correspondência
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let isProcessing = false;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function createMatchBoard() {
+            let numPairs;
+            if (currentDifficulty === 'easy') { numPairs = 8; gameContainer.className = 'grid-container grid-4x4'; }
+            if (currentDifficulty === 'medium') { numPairs = 12; gameContainer.className = 'grid-container grid-4x5'; }
+            if (currentDifficulty === 'hard') { numPairs = 16; gameContainer.className = 'grid-container grid-5x6'; }
+            
+            const gameItems = shuffle(cardsData.slice(0, numPairs));
+            const boardItems = shuffle([...gameItems, ...gameItems]);
+            
+            gameContainer.innerHTML = '';
+            flippedCards = [];
+            matchedPairs = 0;
+            isProcessing = false;
+            
+            boardItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.classList.add('card', 'p-1', 'select-none', 'transform', 'transition-transform');
+                card.dataset.value = item.word;
+
+                const cardInner = document.createElement('div');
+                cardInner.classList.add('card-inner');
+
+                const cardFront = document.createElement('div');
+                cardFront.classList.add('card-front', 'text-4xl');
+                cardFront.textContent = '?';
+
+                const cardBack = document.createElement('div');
+                cardBack.classList.add('card-back');
+                cardBack.innerHTML = `<p class="text-base font-bold">${item.word}</p><span class="text-3xl">${item.emoji}</span>`;
+                
+                cardInner.appendChild(cardFront);
+                cardInner.appendChild(cardBack);
+                card.appendChild(cardInner);
+                
+                card.addEventListener('click', flipCard);
+                gameContainer.appendChild(card);
+            });
+            messageElement.textContent = `Encontre os ${numPairs} pares!`;
+            restartButton.classList.add('hidden');
+        }
+
+        function flipCard(event) {
+            if (isProcessing) return;
+
+            const card = event.currentTarget;
+            const cardInner = card.querySelector('.card-inner');
+
+            if (cardInner.classList.contains('flipped') || cardInner.classList.contains('matched')) {
+                return;
+            }
+
+            cardInner.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                isProcessing = true;
+                setTimeout(checkMatch, 1000);
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const value1 = card1.dataset.value;
+            const value2 = card2.dataset.value;
+
+            if (value1 === value2) {
+                card1.querySelector('.card-inner').classList.add('matched');
+                card2.querySelector('.card-inner').classList.add('matched');
+                matchedPairs++;
+                score += 10;
+                updateScore();
+                playSound('correct');
+                
+                card1.removeEventListener('click', flipCard);
+                card2.removeEventListener('click', flipCard);
+
+                if (matchedPairs === cardsData.slice(0, getNumPairs()).length) {
+                    messageElement.textContent = 'Você venceu! Jogo completo!';
+                    restartButton.classList.remove('hidden');
+                    playSound('win');
+                }
+            } else {
+                score -= 5;
+                updateScore();
+                playSound('error');
+                setTimeout(() => {
+                    card1.querySelector('.card-inner').classList.remove('flipped');
+                    card2.querySelector('.card-inner').classList.remove('flipped');
+                }, 500);
+            }
+
+            flippedCards = [];
+            isProcessing = false;
+        }
+
+        function getNumPairs() {
+            if (currentDifficulty === 'easy') return 8;
+            if (currentDifficulty === 'medium') return 12;
+            if (currentDifficulty === 'hard') return 16;
+            return 8;
+        }
+
+        // Funções do Jogo de Quiz
+        let currentQuizIndex = 0;
+        const quizQuestions = shuffle([...cardsData]);
+
+        function createQuizBoard() {
+            gameContainer.innerHTML = '';
+            gameContainer.className = 'w-full';
+            currentQuizIndex = 0;
+            score = 0;
+            updateScore();
+            restartButton.classList.add('hidden');
+            nextQuizQuestion();
+        }
+
+        function nextQuizQuestion() {
+            if (currentQuizIndex >= quizQuestions.length) {
+                messageElement.textContent = 'Quiz completo! Parabéns!';
+                restartButton.classList.remove('hidden');
+                playSound('win');
+                return;
+            }
+
+            const currentQuestion = quizQuestions[currentQuizIndex];
+            const correctWord = currentQuestion.word;
+            
+            // Criação das opções de resposta (3 incorretas + 1 correta)
+            const incorrectWords = cardsData.filter(item => item.word !== correctWord);
+            const shuffledIncorrect = shuffle(incorrectWords).slice(0, 3);
+            const allOptions = shuffle([...shuffledIncorrect, currentQuestion]);
+
+            gameContainer.innerHTML = `
+                <div class="flex flex-col items-center">
+                    <p class="text-6xl mb-8">${currentQuestion.emoji}</p>
+                    <div id="quiz-options" class="grid grid-cols-2 gap-4 w-full max-w-sm">
+                        ${allOptions.map(option => `
+                            <button data-answer="${option.word}" class="answer-button bg-gray-200 text-gray-800 font-bold py-4 px-6 rounded-xl shadow-md text-xl">${option.word}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            messageElement.textContent = 'Qual a palavra em inglês para essa imagem?';
+            document.querySelectorAll('.answer-button').forEach(button => {
+                button.addEventListener('click', checkQuizAnswer);
+            });
+        }
+
+        function checkQuizAnswer(event) {
+            const selectedWord = event.currentTarget.dataset.answer;
+            const correctWord = quizQuestions[currentQuizIndex].word;
+            
+            if (selectedWord === correctWord) {
+                score += 20;
+                updateScore();
+                playSound('correct');
+                messageElement.textContent = 'Correto!';
+            } else {
+                score -= 10;
+                updateScore();
+                playSound('error');
+                messageElement.textContent = `Incorreto! A resposta certa era "${correctWord}".`;
+            }
+
+            // Desabilita os botões após a resposta
+            document.querySelectorAll('.answer-button').forEach(button => {
+                button.disabled = true;
+                if (button.dataset.answer === correctWord) {
+                    button.classList.add('correct');
+                } else {
+                    button.classList.add('incorrect');
+                }
+            });
+
+            setTimeout(() => {
+                currentQuizIndex++;
+                nextQuizQuestion();
+            }, 2000);
+        }
+
+        // Funções de controle e UI
+        function updateScore() {
+            scoreElement.textContent = score;
+        }
+
+        function switchMode(mode) {
+            currentMode = mode;
+            score = 0;
+            updateScore();
+            if (mode === 'match') {
+                createMatchBoard();
+            } else {
+                createQuizBoard();
+            }
+        }
+
+        // Event Listeners
+        modeMatchButton.addEventListener('click', () => switchMode('match'));
+        modeQuizButton.addEventListener('click', () => switchMode('quiz'));
+        restartButton.addEventListener('click', () => {
+            if (currentMode === 'match') {
+                createMatchBoard();
+            } else {
+                createQuizBoard();
+            }
+        });
+
+        difficultyEasyButton.addEventListener('click', () => { currentDifficulty = 'easy'; if (currentMode === 'match') createMatchBoard(); });
+        difficultyMediumButton.addEventListener('click', () => { currentDifficulty = 'medium'; if (currentMode === 'match') createMatchBoard(); });
+        difficultyHardButton.addEventListener('click', () => { currentDifficulty = 'hard'; if (currentMode === 'match') createMatchBoard(); });
+
+        // Inicia o jogo no modo de correspondência ao carregar a página
+        window.onload = () => switchMode('match');
+    </script>
+</body>
+</html>
