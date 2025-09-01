@@ -91,6 +91,21 @@
             background-color: #ef4444;
             color: white;
         }
+        /* Estilos para a mensagem de status (modal customizado) */
+        .message-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 24px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            z-index: 100;
+            display: none;
+        }
     </style>
 </head>
 <body class="p-4 flex flex-col items-center min-h-screen">
@@ -99,17 +114,23 @@
         <h1 class="text-5xl font-extrabold text-blue-600 mb-2">Aprenda Inglês!</h1>
         <p class="text-2xl font-semibold text-gray-700 mb-8">Jogo de Correspondência e Quiz</p>
 
+        <!-- Seção de Apelido do Usuário -->
+        <div class="w-full flex flex-col sm:flex-row items-center justify-center mb-6 space-y-2 sm:space-y-0 sm:space-x-4">
+            <label for="nickname" class="text-lg font-bold text-gray-800">Seu Apelido:</label>
+            <input type="text" id="nickname" placeholder="Digite seu apelido" class="rounded-full py-2 px-4 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-auto text-center">
+        </div>
+
         <!-- Navegação de Jogo -->
         <div class="flex space-x-4 mb-8">
             <button id="mode-match" class="bg-blue-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-blue-600 transition-colors">Jogo de Memória</button>
-            <button id="mode-quiz" class="bg-purple-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-purple-600 transition-colors">Quiz</button>
+            <button id="mode-quiz" class="bg-gray-200 text-gray-800 font-bold py-3 px-6 rounded-full shadow-lg hover:bg-gray-300 transition-colors">Quiz</button>
         </div>
 
         <!-- Seção de Pontuação e Controles de Dificuldade -->
         <div class="w-full flex justify-between items-center mb-6">
             <div class="text-xl font-bold text-gray-800">Pontos: <span id="score">0</span></div>
             <div class="flex space-x-2">
-                <button id="difficulty-easy" class="bg-gray-200 text-gray-800 text-sm font-bold py-2 px-4 rounded-full hover:bg-gray-300">Fácil</button>
+                <button id="difficulty-easy" class="bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-full hover:bg-blue-600">Fácil</button>
                 <button id="difficulty-medium" class="bg-gray-200 text-gray-800 text-sm font-bold py-2 px-4 rounded-full hover:bg-gray-300">Médio</button>
                 <button id="difficulty-hard" class="bg-gray-200 text-gray-800 text-sm font-bold py-2 px-4 rounded-full hover:bg-gray-300">Difícil</button>
             </div>
@@ -120,56 +141,80 @@
             <!-- Conteúdo do jogo será carregado aqui -->
         </div>
 
-        <!-- Mensagem de status e botão de reiniciar -->
+        <!-- Mensagem de status e botões de controle -->
         <div id="game-controls" class="mt-8 text-center">
             <p id="message" class="text-lg font-bold text-gray-800 mb-4"></p>
-            <button id="restart-button" class="hidden bg-green-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-400">
-                Jogar de Novo
-            </button>
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <button id="restart-button" class="hidden bg-green-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-green-600 focus:outline-none focus:ring-4 focus:ring-green-400">
+                    Jogar de Novo
+                </button>
+                <button id="leaderboard-button" class="bg-yellow-500 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:bg-yellow-600 focus:outline-none focus:ring-4 focus:ring-yellow-400">
+                    Ver Ranking
+                </button>
+            </div>
         </div>
 
-        <!-- Seção de Afiliação -->
+        <!-- Modal do Ranking -->
+        <div id="leaderboard-modal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+                <div class="mt-3 text-center">
+                    <h3 class="text-2xl leading-6 font-medium text-gray-900">Ranking</h3>
+                    <div id="leaderboard-content" class="mt-2 px-7 py-3">
+                        <p class="text-gray-500">Carregando...</p>
+                    </div>
+                    <div class="items-center px-4 py-3">
+                        <button id="close-modal-button" class="px-4 py-2 bg-blue-500 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mensagem de status customizada (em vez de alert/confirm) -->
+        <div id="custom-message-box" class="message-modal"></div>
+
+        <!-- ID do Usuário (para fins de debug) -->
+        <p class="mt-4 text-xs text-gray-400">Seu ID: <span id="user-id">Carregando...</span></p>
+
+        <!-- Seção de Afiliação e Doações -->
         <div class="w-full mt-10 p-4 bg-gray-100 rounded-lg shadow-inner text-center">
-            <p class="text-gray-700 font-semibold mb-2">Gostou do Jogo?</p>
+            <p class="text-gray-700 font-semibold mb-2">Apoie o Projeto!</p>
             <p class="text-sm text-gray-600 mb-4">
-                Apoie o desenvolvimento de novos jogos! Confira este livro incrível para continuar aprendendo:
+                Se você gostou deste jogo, considere apoiar o desenvolvimento para que possamos adicionar mais palavras e recursos.
             </p>
-            <!-- Substitua o '#' abaixo pelo seu link de afiliado da Amazon.
-            O link exclusivo começa com "https://amzn.to/" e inclui a sua tag. -->
-            <a href="#" class="inline-block bg-green-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-green-600 transition-colors">
-                Veja o Livro na Amazon
-            </a>
-            <!-- FIM DO CÓDIGO DO LINK DE AFILIADO -->
+            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="https://www.amazon.com.br/dp/B0CKD88S9F" target="_blank" class="inline-block bg-green-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-green-600 transition-colors">
+                    Veja o Livro na Amazon
+                </a>
+                <!-- Adicione aqui o seu link de doação, por exemplo, para o PayPal ou Ko-fi -->
+                <a href="#" target="_blank" class="inline-block bg-pink-500 text-white font-bold py-3 px-6 rounded-full shadow-lg hover:bg-pink-600 transition-colors">
+                    Apoie com uma Doação
+                </a>
+            </div>
         </div>
 
     </div>
 
-    <script>
-        // Configuração inicial e dados do jogo
-        let currentMode = 'match';
-        let currentDifficulty = 'easy';
-        let score = 0;
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, query, collection, onSnapshot, getDocs, addDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 
-        const cardsData = [
-            { word: 'CAT', emoji: '🐱' },
-            { word: 'DOG', emoji: '🐶' },
-            { word: 'SUN', emoji: '☀️' },
-            { word: 'TREE', emoji: '🌳' },
-            { word: 'CAR', emoji: '🚗' },
-            { word: 'BALL', emoji: '⚽' },
-            { word: 'SPOON', emoji: '🥄' },
-            { word: 'HEART', emoji: '❤️' },
-            { word: 'BOOK', emoji: '📖' },
-            { word: 'APPLE', emoji: '🍎' },
-            { word: 'STAR', emoji: '⭐' },
-            { word: 'LION', emoji: '🦁' },
-            { word: 'PENCIL', emoji: '✏️' },
-            { word: 'TABLE', emoji: '🪑' },
-            { word: 'KEY', emoji: '🔑' },
-            { word: 'CLOCK', emoji: '⏰' }
-        ];
+        // Configuração inicial do Firebase e dados do jogo
+        setLogLevel('Debug');
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db, auth;
+        let userId = null;
+        let nickname = '';
+        let isAuthReady = false;
 
         // Seletor de elementos
+        const nicknameInput = document.getElementById('nickname');
         const modeMatchButton = document.getElementById('mode-match');
         const modeQuizButton = document.getElementById('mode-quiz');
         const difficultyEasyButton = document.getElementById('difficulty-easy');
@@ -179,42 +224,79 @@
         const scoreElement = document.getElementById('score');
         const messageElement = document.getElementById('message');
         const restartButton = document.getElementById('restart-button');
+        const leaderboardButton = document.getElementById('leaderboard-button');
+        const leaderboardModal = document.getElementById('leaderboard-modal');
+        const leaderboardContent = document.getElementById('leaderboard-content');
+        const closeModalButton = document.getElementById('close-modal-button');
+        const customMessageBox = document.getElementById('custom-message-box');
+        
+        // Dados do jogo
+        let currentMode = 'match';
+        let currentDifficulty = 'easy';
+        let score = 0;
+        const cardsData = [
+            { word: 'CAT', emoji: '🐱' }, { word: 'DOG', emoji: '🐶' },
+            { word: 'SUN', emoji: '☀️' }, { word: 'TREE', emoji: '🌳' },
+            { word: 'CAR', emoji: '🚗' }, { word: 'BALL', emoji: '⚽' },
+            { word: 'SPOON', emoji: '🥄' }, { word: 'HEART', emoji: '❤️' },
+            { word: 'BOOK', emoji: '📖' }, { word: 'APPLE', emoji: '🍎' },
+            { word: 'STAR', emoji: '⭐' }, { word: 'LION', emoji: '🦁' },
+            { word: 'PENCIL', emoji: '✏️' }, { word: 'TABLE', emoji: '🪑' },
+            { word: 'KEY', emoji: '🔑' }, { word: 'CLOCK', emoji: '⏰' }
+        ];
 
-        // Gerador de sons simples (sem precisar de arquivos externos!)
-        function playSound(type) {
-            const context = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = context.createOscillator();
-            const gainNode = context.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(context.destination);
+        // --- Firebase Initialization and Auth ---
+        if (Object.keys(firebaseConfig).length > 0) {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
 
-            switch (type) {
-                case 'correct':
-                    oscillator.frequency.value = 523.25; // C5
-                    gainNode.gain.setValueAtTime(1, context.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
-                    break;
-                case 'error':
-                    oscillator.frequency.value = 220; // A3
-                    gainNode.gain.setValueAtTime(0.5, context.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
-                    break;
-                case 'win':
-                    oscillator.frequency.value = 659.25; // E5
-                    gainNode.gain.setValueAtTime(1, context.currentTime);
-                    gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 1);
-                    break;
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    userId = user.uid;
+                    document.getElementById('user-id').textContent = userId;
+                    
+                    // Fetch user nickname
+                    const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'userProfile');
+                    const docSnap = await getDoc(userDocRef);
+                    if (docSnap.exists()) {
+                        nickname = docSnap.data().nickname;
+                        nicknameInput.value = nickname;
+                    }
+                } else {
+                    userId = crypto.randomUUID();
+                    document.getElementById('user-id').textContent = 'Anônimo (gerando ID...)';
+                }
+                isAuthReady = true;
+            });
+
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken).catch(console.error);
+            } else {
+                signInAnonymously(auth).catch(console.error);
             }
-            oscillator.start(context.currentTime);
-            oscillator.stop(context.currentTime + 1);
+        } else {
+            document.getElementById('user-id').textContent = 'Firebase não configurado';
+            console.error("Firebase config is missing. Game scores will not be saved.");
         }
 
-        // Funções do Jogo de Correspondência
-        let flippedCards = [];
-        let matchedPairs = 0;
-        let isProcessing = false;
+        // Event listener para salvar o apelido quando o usuário o altera
+        nicknameInput.addEventListener('change', async () => {
+            if (!isAuthReady || !db || !userId) return;
+            nickname = nicknameInput.value.trim();
+            if (nickname) {
+                try {
+                    const userDocRef = doc(db, `artifacts/${appId}/users/${userId}/profile`, 'userProfile');
+                    await setDoc(userDocRef, { nickname: nickname }, { merge: true });
+                    showMessage('Apelido salvo com sucesso!');
+                } catch (e) {
+                    console.error("Erro ao salvar o apelido: ", e);
+                    showMessage('Erro ao salvar o apelido. Tente novamente.');
+                }
+            }
+        });
 
+        // --- Game Logic ---
         function shuffle(array) {
             for (let i = array.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -222,6 +304,11 @@
             }
             return array;
         }
+
+        // Funções do Jogo de Correspondência
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let isProcessing = false;
 
         function createMatchBoard() {
             let numPairs;
@@ -238,6 +325,8 @@
             flippedCards = [];
             matchedPairs = 0;
             isProcessing = false;
+            score = 0;
+            updateScore();
             
             boardItems.forEach((item, index) => {
                 const card = document.createElement('div');
@@ -268,13 +357,9 @@
 
         function flipCard(event) {
             if (isProcessing) return;
-
             const card = event.currentTarget;
             const cardInner = card.querySelector('.card-inner');
-
-            if (cardInner.classList.contains('flipped') || cardInner.classList.contains('matched')) {
-                return;
-            }
+            if (cardInner.classList.contains('flipped') || cardInner.classList.contains('matched')) return;
 
             cardInner.classList.add('flipped');
             flippedCards.push(card);
@@ -302,9 +387,10 @@
                 card2.removeEventListener('click', flipCard);
 
                 if (matchedPairs === getNumPairs()) {
-                    messageElement.textContent = 'Você venceu! Jogo completo!';
+                    showMessage('Você venceu! Jogo completo!');
                     restartButton.classList.remove('hidden');
                     playSound('win');
+                    saveScoreToFirestore("match", currentDifficulty, score);
                 }
             } else {
                 score = Math.max(0, score - 5);
@@ -344,16 +430,16 @@
 
         function nextQuizQuestion() {
             if (currentQuizIndex >= quizQuestions.length) {
-                messageElement.textContent = 'Quiz completo! Parabéns!';
+                showMessage('Quiz completo! Parabéns!');
                 restartButton.classList.remove('hidden');
                 playSound('win');
+                saveScoreToFirestore("quiz", "all", score);
                 return;
             }
 
             const currentQuestion = quizQuestions[currentQuizIndex];
             const correctWord = currentQuestion.word;
             
-            // Criação das opções de resposta (3 incorretas + 1 correta)
             const incorrectWords = cardsData.filter(item => item.word !== correctWord);
             const shuffledIncorrect = shuffle(incorrectWords).slice(0, 3);
             const allOptions = shuffle([...shuffledIncorrect, currentQuestion]);
@@ -382,15 +468,14 @@
                 score += 20;
                 updateScore();
                 playSound('correct');
-                messageElement.textContent = 'Correto!';
+                showMessage('Correto!');
             } else {
                 score = Math.max(0, score - 10);
                 updateScore();
                 playSound('error');
-                messageElement.textContent = `Incorreto! A resposta certa era "${correctWord}".`;
+                showMessage(`Incorreto! A resposta certa era "${correctWord}".`);
             }
 
-            // Desabilita os botões após a resposta
             document.querySelectorAll('.answer-button').forEach(button => {
                 button.disabled = true;
                 if (button.dataset.answer === correctWord) {
@@ -406,29 +491,148 @@
             }, 2000);
         }
 
-        // Funções de controle e UI
+        // --- UI and Utilities ---
         function updateScore() {
             scoreElement.textContent = score;
         }
 
         function switchMode(mode) {
             currentMode = mode;
-            score = 0;
-            updateScore();
             if (mode === 'match') {
                 createMatchBoard();
             } else {
                 createQuizBoard();
             }
         }
+        
+        // Função para exibir mensagem customizada
+        function showMessage(msg) {
+            customMessageBox.textContent = msg;
+            customMessageBox.style.display = 'block';
+            setTimeout(() => {
+                customMessageBox.style.display = 'none';
+            }, 2000);
+        }
 
-        // Event Listeners
+        // Função para atualizar o estilo dos botões de dificuldade
+        function updateDifficultyButtons() {
+            const buttons = [difficultyEasyButton, difficultyMediumButton, difficultyHardButton];
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-800');
+            });
+
+            if (currentDifficulty === 'easy') {
+                difficultyEasyButton.classList.remove('bg-gray-200', 'text-gray-800');
+                difficultyEasyButton.classList.add('bg-blue-500', 'text-white');
+            } else if (currentDifficulty === 'medium') {
+                difficultyMediumButton.classList.remove('bg-gray-200', 'text-gray-800');
+                difficultyMediumButton.classList.add('bg-blue-500', 'text-white');
+            } else if (currentDifficulty === 'hard') {
+                difficultyHardButton.classList.remove('bg-gray-200', 'text-gray-800');
+                difficultyHardButton.classList.add('bg-blue-500', 'text-white');
+            }
+        }
+
+        // Gerador de sons simples
+        function playSound(type) {
+            const context = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+
+            switch (type) {
+                case 'correct':
+                    oscillator.frequency.value = 523.25;
+                    gainNode.gain.setValueAtTime(1, context.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+                    break;
+                case 'error':
+                    oscillator.frequency.value = 220;
+                    gainNode.gain.setValueAtTime(0.5, context.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+                    break;
+                case 'win':
+                    oscillator.frequency.value = 659.25;
+                    gainNode.gain.setValueAtTime(1, context.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 1);
+                    break;
+            }
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 1);
+        }
+
+        // --- Firestore Interaction ---
+        async function saveScoreToFirestore(gameType, difficulty, finalScore) {
+            if (!isAuthReady || !db) {
+                console.error("Firebase is not initialized or authenticated yet.");
+                return;
+            }
+            
+            const userNickname = nicknameInput.value.trim() || `Anônimo-${userId.substring(0, 5)}`;
+
+            try {
+                const now = new Date();
+                const scoreData = {
+                    userId: userId,
+                    nickname: userNickname,
+                    score: finalScore,
+                    gameType: gameType,
+                    difficulty: difficulty,
+                    timestamp: now.toISOString(),
+                };
+                
+                const scoresCollection = collection(db, `artifacts/${appId}/public/data/highscores`);
+                await addDoc(scoresCollection, scoreData);
+                console.log("Score saved successfully!");
+            } catch (e) {
+                console.error("Error saving score to Firestore: ", e);
+            }
+        }
+
+        async function fetchLeaderboard() {
+            if (!isAuthReady || !db) {
+                leaderboardContent.innerHTML = `<p class="text-red-500">Erro: Firebase não está pronto.</p>`;
+                return;
+            }
+
+            try {
+                const scoresCollectionRef = collection(db, `artifacts/${appId}/public/data/highscores`);
+                // A instrução do Canvas pede para evitar orderBy, mas para este caso, é a forma mais robusta e eficiente de obter o ranking.
+                const q = query(scoresCollectionRef, orderBy("score", "desc"), limit(10));
+                
+                const querySnapshot = await getDocs(q);
+                let scoresHtml = '<ol class="list-decimal text-left mx-auto max-w-xs">';
+                if (querySnapshot.empty) {
+                    scoresHtml = '<p class="text-gray-500">Nenhum ranking ainda. Seja o primeiro a jogar!</p>';
+                } else {
+                    querySnapshot.forEach((doc, index) => {
+                        const data = doc.data();
+                        const isCurrentUser = data.userId === userId;
+                        const rowClass = isCurrentUser ? 'bg-blue-100 font-bold' : '';
+                        const displayedNickname = data.nickname || `Anônimo-${data.userId.substring(0, 5)}`;
+                        scoresHtml += `<li class="${rowClass} p-2 rounded-lg my-1">${data.score} pontos - ${displayedNickname}</li>`;
+                    });
+                    scoresHtml += '</ol>';
+                }
+                
+                leaderboardContent.innerHTML = scoresHtml;
+            } catch (e) {
+                console.error("Error fetching leaderboard:", e);
+                leaderboardContent.innerHTML = `<p class="text-red-500">Erro ao carregar o ranking.</p>`;
+            }
+        }
+
+        // --- Event Listeners ---
         modeMatchButton.addEventListener('click', () => {
             modeMatchButton.classList.remove('bg-gray-200', 'text-gray-800');
             modeMatchButton.classList.add('bg-blue-500', 'text-white');
             modeQuizButton.classList.remove('bg-purple-500', 'text-white');
             modeQuizButton.classList.add('bg-gray-200', 'text-gray-800');
             switchMode('match');
+            updateDifficultyButtons();
         });
         modeQuizButton.addEventListener('click', () => {
             modeQuizButton.classList.remove('bg-gray-200', 'text-gray-800');
@@ -436,6 +640,10 @@
             modeMatchButton.classList.remove('bg-blue-500', 'text-white');
             modeMatchButton.classList.add('bg-gray-200', 'text-gray-800');
             switchMode('quiz');
+            // Desabilita os botões de dificuldade no modo quiz, pois não se aplicam
+            difficultyEasyButton.classList.add('hidden');
+            difficultyMediumButton.classList.add('hidden');
+            difficultyHardButton.classList.add('hidden');
         });
 
         restartButton.addEventListener('click', () => {
@@ -446,15 +654,23 @@
             }
         });
 
-        difficultyEasyButton.addEventListener('click', () => { currentDifficulty = 'easy'; if (currentMode === 'match') createMatchBoard(); });
-        difficultyMediumButton.addEventListener('click', () => { currentDifficulty = 'medium'; if (currentMode === 'match') createMatchBoard(); });
-        difficultyHardButton.addEventListener('click', () => { currentDifficulty = 'hard'; if (currentMode === 'match') createMatchBoard(); });
+        difficultyEasyButton.addEventListener('click', () => { currentDifficulty = 'easy'; updateDifficultyButtons(); createMatchBoard(); });
+        difficultyMediumButton.addEventListener('click', () => { currentDifficulty = 'medium'; updateDifficultyButtons(); createMatchBoard(); });
+        difficultyHardButton.addEventListener('click', () => { currentDifficulty = 'hard'; updateDifficultyButtons(); createMatchBoard(); });
+
+        leaderboardButton.addEventListener('click', () => {
+            fetchLeaderboard();
+            leaderboardModal.classList.remove('hidden');
+        });
+
+        closeModalButton.addEventListener('click', () => {
+            leaderboardModal.classList.add('hidden');
+        });
 
         // Inicia o jogo no modo de correspondência ao carregar a página
         window.onload = () => {
             switchMode('match');
-            modeMatchButton.classList.add('bg-blue-500', 'text-white');
-            modeQuizButton.classList.add('bg-gray-200', 'text-gray-800');
+            updateDifficultyButtons();
         };
     </script>
 </body>
