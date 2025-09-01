@@ -15,8 +15,7 @@
             background: linear-gradient(135deg, #f0f9ff 0%, #d4e8ff 100%);
         }
         .card {
-            width: 80px;
-            height: 100px;
+            aspect-ratio: 4 / 5;
             perspective: 1000px;
             cursor: pointer;
         }
@@ -40,15 +39,17 @@
             backface-visibility: hidden;
             border-radius: 12px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 2rem;
             font-weight: bold;
+            line-height: 1;
         }
         .card-front {
             background-color: #3b82f6;
             color: white;
             border: 3px solid #1e40af;
+            font-size: 2rem;
         }
         .card-back {
             background-color: #f7f7f7;
@@ -56,6 +57,7 @@
             transform: rotateY(180deg);
             border: 3px solid #e5e7eb;
             font-size: 1.5rem;
+            padding: 4px;
         }
         .card-inner.matched .card-front,
         .card-inner.matched .card-back {
@@ -91,7 +93,7 @@
         }
     </style>
 </head>
-<body class="p-4 flex flex-col items-center">
+<body class="p-4 flex flex-col items-center min-h-screen">
 
     <div class="flex flex-col items-center p-6 bg-white rounded-2xl shadow-xl w-full max-w-2xl text-center">
         <h1 class="text-5xl font-extrabold text-blue-600 mb-2">Aprenda Inglês!</h1>
@@ -223,14 +225,16 @@
 
         function createMatchBoard() {
             let numPairs;
-            if (currentDifficulty === 'easy') { numPairs = 8; gameContainer.className = 'grid-container grid-4x4'; }
-            if (currentDifficulty === 'medium') { numPairs = 12; gameContainer.className = 'grid-container grid-4x5'; }
-            if (currentDifficulty === 'hard') { numPairs = 16; gameContainer.className = 'grid-container grid-5x6'; }
+            let gridClass;
+            if (currentDifficulty === 'easy') { numPairs = 8; gridClass = 'grid-4x4'; }
+            if (currentDifficulty === 'medium') { numPairs = 12; gridClass = 'grid-4x5'; }
+            if (currentDifficulty === 'hard') { numPairs = 16; gridClass = 'grid-5x6'; }
             
             const gameItems = shuffle(cardsData.slice(0, numPairs));
             const boardItems = shuffle([...gameItems, ...gameItems]);
             
             gameContainer.innerHTML = '';
+            gameContainer.className = `grid-container ${gridClass}`;
             flippedCards = [];
             matchedPairs = 0;
             isProcessing = false;
@@ -249,7 +253,7 @@
 
                 const cardBack = document.createElement('div');
                 cardBack.classList.add('card-back');
-                cardBack.innerHTML = `<p class="text-base font-bold">${item.word}</p><span class="text-3xl">${item.emoji}</span>`;
+                cardBack.innerHTML = `<span class="text-xl md:text-2xl">${item.word}</span><span class="text-3xl md:text-4xl mt-1">${item.emoji}</span>`;
                 
                 cardInner.appendChild(cardFront);
                 cardInner.appendChild(cardBack);
@@ -297,13 +301,13 @@
                 card1.removeEventListener('click', flipCard);
                 card2.removeEventListener('click', flipCard);
 
-                if (matchedPairs === cardsData.slice(0, getNumPairs()).length) {
+                if (matchedPairs === getNumPairs()) {
                     messageElement.textContent = 'Você venceu! Jogo completo!';
                     restartButton.classList.remove('hidden');
                     playSound('win');
                 }
             } else {
-                score -= 5;
+                score = Math.max(0, score - 5);
                 updateScore();
                 playSound('error');
                 setTimeout(() => {
@@ -325,7 +329,7 @@
 
         // Funções do Jogo de Quiz
         let currentQuizIndex = 0;
-        const quizQuestions = shuffle([...cardsData]);
+        let quizQuestions = [];
 
         function createQuizBoard() {
             gameContainer.innerHTML = '';
@@ -334,6 +338,7 @@
             score = 0;
             updateScore();
             restartButton.classList.add('hidden');
+            quizQuestions = shuffle([...cardsData]);
             nextQuizQuestion();
         }
 
@@ -379,7 +384,7 @@
                 playSound('correct');
                 messageElement.textContent = 'Correto!';
             } else {
-                score -= 10;
+                score = Math.max(0, score - 10);
                 updateScore();
                 playSound('error');
                 messageElement.textContent = `Incorreto! A resposta certa era "${correctWord}".`;
@@ -418,8 +423,21 @@
         }
 
         // Event Listeners
-        modeMatchButton.addEventListener('click', () => switchMode('match'));
-        modeQuizButton.addEventListener('click', () => switchMode('quiz'));
+        modeMatchButton.addEventListener('click', () => {
+            modeMatchButton.classList.remove('bg-gray-200', 'text-gray-800');
+            modeMatchButton.classList.add('bg-blue-500', 'text-white');
+            modeQuizButton.classList.remove('bg-purple-500', 'text-white');
+            modeQuizButton.classList.add('bg-gray-200', 'text-gray-800');
+            switchMode('match');
+        });
+        modeQuizButton.addEventListener('click', () => {
+            modeQuizButton.classList.remove('bg-gray-200', 'text-gray-800');
+            modeQuizButton.classList.add('bg-purple-500', 'text-white');
+            modeMatchButton.classList.remove('bg-blue-500', 'text-white');
+            modeMatchButton.classList.add('bg-gray-200', 'text-gray-800');
+            switchMode('quiz');
+        });
+
         restartButton.addEventListener('click', () => {
             if (currentMode === 'match') {
                 createMatchBoard();
@@ -433,7 +451,11 @@
         difficultyHardButton.addEventListener('click', () => { currentDifficulty = 'hard'; if (currentMode === 'match') createMatchBoard(); });
 
         // Inicia o jogo no modo de correspondência ao carregar a página
-        window.onload = () => switchMode('match');
+        window.onload = () => {
+            switchMode('match');
+            modeMatchButton.classList.add('bg-blue-500', 'text-white');
+            modeQuizButton.classList.add('bg-gray-200', 'text-gray-800');
+        };
     </script>
 </body>
 </html>
